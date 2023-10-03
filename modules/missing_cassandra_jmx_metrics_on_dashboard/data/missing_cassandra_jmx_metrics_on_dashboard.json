@@ -1,0 +1,146 @@
+{
+  "name": "missing_cassandra_jmx_metrics_on_dashboard",
+  "description": "This incident type refers to the issue of missing JMX metrics for Cassandra on a dashboard. JMX metrics are important for monitoring the performance of Cassandra, and their absence on a dashboard can lead to difficulties in identifying and resolving issues that may arise. This incident requires investigation to determine the cause of the issue and to restore the missing metrics to the dashboard.",
+  "params": [
+    {
+      "name": "IP_ADDRESS_OF_CASSANDRA_NODE",
+      "value": ""
+    },
+    {
+      "name": "JMX_USERNAME",
+      "value": ""
+    },
+    {
+      "name": "DASHBOARD_CONFIG_FILE",
+      "value": ""
+    },
+    {
+      "name": "CASSANDRA_HOST",
+      "value": ""
+    },
+    {
+      "name": "JMX_PORT_NUMBER",
+      "value": ""
+    },
+    {
+      "name": "CASSANDRA_PORT",
+      "value": ""
+    },
+    {
+      "name": "JMX_PASSWORD",
+      "value": ""
+    },
+    {
+      "name": "IP_ADDRESS",
+      "value": ""
+    },
+    {
+      "name": "JMX_PORT",
+      "value": ""
+    },
+    {
+      "name": "HOST_NAME",
+      "value": ""
+    },
+    {
+      "name": "K8S_CLUSTER_NAME",
+      "value": ""
+    },
+    {
+      "name": "NAMESPACE",
+      "value": ""
+    }
+  ],
+  "cells": [
+    {
+      "name": "cell_1",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Missing Cassandra JMX Metrics on Dashboard\nThis incident type refers to the issue of missing JMX metrics for Cassandra on a dashboard. JMX metrics are important for monitoring the performance of Cassandra, and their absence on a dashboard can lead to difficulties in identifying and resolving issues that may arise. This incident requires investigation to determine the cause of the issue and to restore the missing metrics to the dashboard."
+    },
+    {
+      "name": "cell_2",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Step 1: Check if Cassandra is running"
+    },
+    {
+      "name": "cell_3",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `sudo service cassandra status`"
+    },
+    {
+      "name": "cell_4",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Step 2: Check if JMX is enabled in Cassandra's configuration file"
+    },
+    {
+      "name": "cell_5",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `sudo cat /etc/cassandra/cassandra.yaml | grep -A 1 \"jmx:\"`"
+    },
+    {
+      "name": "cell_6",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Step 3: Check if JMX is reachable from the local machine"
+    },
+    {
+      "name": "cell_7",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_jmx_script($JMX_USERNAME, $JMX_PASSWORD, $JMX_PORT)"
+    },
+    {
+      "name": "cell_8",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Step 4: Check if JMX is reachable from the remote machine where the dashboard is hosted"
+    },
+    {
+      "name": "cell_9",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `java -jar /usr/share/jmxterm/jmxterm.jar -l ${CASSANDRA_HOST}:${JMX_PORT} -u ${JMX_USERNAME} -p ${JMX_PASSWORD} -n -v silent -c \"domains\"`"
+    },
+    {
+      "name": "cell_10",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Step 5: Check if the metrics are being collected in Cassandra"
+    },
+    {
+      "name": "cell_11",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `nodetool sjk mxdump ${CASSANDRA_HOST}:${JMX_PORT} | grep -i \"CassandraMetrics\"`"
+    },
+    {
+      "name": "cell_12",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Step 6: Check if the dashboard is properly configured to display the JMX metrics"
+    },
+    {
+      "name": "cell_13",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `sudo cat ${DASHBOARD_CONFIG_FILE} | grep -i \"CassandraMetrics\"`"
+    },
+    {
+      "name": "cell_14",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Verify that the JMX interface is enabled on the Cassandra nodes and that the appropriate JMX ports are open and accessible."
+    },
+    {
+      "name": "cell_15",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_cassandra_jmx_verification($IP_ADDRESS_OF_CASSANDRA_NODE, $JMX_PORT_NUMBER, $IP_ADDRESS, $JMX_PORT)"
+    }
+  ]
+}
